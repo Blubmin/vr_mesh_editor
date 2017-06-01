@@ -1,0 +1,8 @@
+﻿  main.cpp
+u:\vr\minimalopengl\minimalOpenGL.h(22): warning C4068: unknown pragma
+u:\vr\minimalopengl\minimalOpenGL.h(23): warning C4068: unknown pragma
+u:\vr\minimalopengl\minimalOpenGL.h(288): warning C4244: 'initializing': conversion from 'std::streamoff' to '::size_t', possible loss of data
+u:\vr\minimalopengl\minimalOpenGL.h(343): warning C4068: unknown pragma
+U:\VR\minimalOpenGL\main.cpp(316): warning C4305: 'argument': truncation from 'double' to 'GLfloat'
+U:\VR\minimalOpenGL\main.cpp(434): warning C4101: 'temp': unreferenced local variable
+  tori.vcxproj -> U:\VR\minimalOpenGL\build\Debug\tori.exe
