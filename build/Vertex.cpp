@@ -37,6 +37,16 @@ void Vertex::remove_triangle(Triangle * tri)
 	_tris.erase(remove(_tris.begin(), _tris.end(), tri));
 }
 
+void Vertex::add_quad(Quad * quad)
+{
+	_quads.push_back(quad);
+}
+
+void Vertex::remove_quad(Quad * quad)
+{
+	_quads.erase(remove(_quads.begin(), _quads.end(), quad));
+}
+
 void Vertex::add_edge(Edge * edge)
 {
 	_edges.push_back(edge);

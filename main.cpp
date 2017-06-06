@@ -63,6 +63,7 @@
 #include <iostream>
 
 #include <engine_base\Program.h>
+#include <engine_base\GLSL.h>
 #include "Mesh.h"
 #include "matrix.h"
 #include "minimalOpenGL.h"
@@ -143,41 +144,42 @@ void run() {
 
 	prog = new Program("build/flat.vert", "build/flat.frag");
 	Mesh box = Mesh();
+	Mesh sphere = Mesh("ball.obj");
 
     /////////////////////////////////////////////////////////////////////
     // Create the main shader
-    //const GLuint shader = createShaderProgram(loadTextFile("min.vrt"), loadTextFile("min.pix"));
+    const GLuint shader = createShaderProgram(loadTextFile("min.vrt"), loadTextFile("min.pix"));
 
     // Binding points for attributes and uniforms discovered from the shader
-    /*const GLint positionAttribute   = glGetAttribLocation(shader,  "position");
+    const GLint positionAttribute   = glGetAttribLocation(shader,  "position");
     const GLint normalAttribute     = glGetAttribLocation(shader,  "normal");
     const GLint texCoordAttribute   = glGetAttribLocation(shader,  "texCoord");
     const GLint tangentAttribute    = glGetAttribLocation(shader,  "tangent");    
-    const GLint colorTextureUniform = glGetUniformLocation(shader, "colorTexture");*/
+    const GLint colorTextureUniform = glGetUniformLocation(shader, "colorTexture");
 
-   /* const GLuint uniformBlockIndex = glGetUniformBlockIndex(shader, "Uniform");
+    const GLuint uniformBlockIndex = glGetUniformBlockIndex(shader, "Uniform");
     const GLuint uniformBindingPoint = 1;
-    glUniformBlockBinding(shader, uniformBlockIndex, uniformBindingPoint);*/
+    glUniformBlockBinding(shader, uniformBlockIndex, uniformBindingPoint);
 
-    //GLuint uniformBlock;
-    //glGenBuffers(1, &uniformBlock);
+    GLuint uniformBlock;
+    glGenBuffers(1, &uniformBlock);
 
-    //{
-    //    // Allocate space for the uniform block buffer
-    //    GLint uniformBlockSize;
-    //    glGetActiveUniformBlockiv(shader, uniformBlockIndex, GL_UNIFORM_BLOCK_DATA_SIZE, &uniformBlockSize);
-    //    glBindBuffer(GL_UNIFORM_BUFFER, uniformBlock);
-    //    glBufferData(GL_UNIFORM_BUFFER, uniformBlockSize, nullptr, GL_DYNAMIC_DRAW);
-    //}
+    {
+        // Allocate space for the uniform block buffer
+        GLint uniformBlockSize;
+        glGetActiveUniformBlockiv(shader, uniformBlockIndex, GL_UNIFORM_BLOCK_DATA_SIZE, &uniformBlockSize);
+        glBindBuffer(GL_UNIFORM_BUFFER, uniformBlock);
+        glBufferData(GL_UNIFORM_BUFFER, uniformBlockSize, nullptr, GL_DYNAMIC_DRAW);
+    }
 
-    /*const GLchar* uniformName[] = {
+    const GLchar* uniformName[] = {
         "Uniform.objectToWorldNormalMatrix",
         "Uniform.objectToWorldMatrix",
         "Uniform.modelViewProjectionMatrix",
         "Uniform.light",
-        "Uniform.cameraPosition"};*/
+        "Uniform.cameraPosition"};
 
-    /*const int numBlockUniforms = sizeof(uniformName) / sizeof(uniformName[0]);
+    const int numBlockUniforms = sizeof(uniformName) / sizeof(uniformName[0]);
 #   ifdef _DEBUG
     {
         GLint debugNumUniforms = 0;
@@ -191,39 +193,41 @@ void run() {
         }
         assert(debugNumUniforms >= numBlockUniforms);
     }
-#   endif*/
+#   endif
 
-    //// Map uniform names to indices within the block
-    //GLuint uniformIndex[numBlockUniforms];
-    //glGetUniformIndices(shader, numBlockUniforms, uniformName, uniformIndex);
-    //assert(uniformIndex[0] < 10000);
+    // Map uniform names to indices within the block
+    GLuint uniformIndex[numBlockUniforms];
+    glGetUniformIndices(shader, numBlockUniforms, uniformName, uniformIndex);
+    assert(uniformIndex[0] < 10000);
 
-    //// Map indices to byte offsets
-    //GLint  uniformOffset[numBlockUniforms];
-    //glGetActiveUniformsiv(shader, numBlockUniforms, uniformIndex, GL_UNIFORM_OFFSET, uniformOffset);
-    //assert(uniformOffset[0] >= 0);
+    // Map indices to byte offsets
+    GLint  uniformOffset[numBlockUniforms];
+    glGetActiveUniformsiv(shader, numBlockUniforms, uniformIndex, GL_UNIFORM_OFFSET, uniformOffset);
+    assert(uniformOffset[0] >= 0);
 
-    //// Load a texture map
-    //GLuint colorTexture = GL_NONE;
-    //{
-    //    int textureWidth, textureHeight, channels;
-    //    std::vector<std::uint8_t> data;
-    //    loadBMP("color.bmp", textureWidth, textureHeight, channels, data);
+    // Load a texture map
+    GLuint colorTexture = GL_NONE;
+    {
+        int textureWidth, textureHeight, channels;
+        std::vector<std::uint8_t> data;
+        loadBMP("color.bmp", textureWidth, textureHeight, channels, data);
 
-    //    glGenTextures(1, &colorTexture);
-    //    glBindTexture(GL_TEXTURE_2D, colorTexture);
-    //    glTexImage2D(GL_TEXTURE_2D, 0, GL_SRGB8, textureWidth, textureHeight, 0, (channels == 3) ? GL_RGB : GL_RGBA, GL_UNSIGNED_BYTE, &data[0]);
-    //    glGenerateMipmap(GL_TEXTURE_2D);
-    //}
+        glGenTextures(1, &colorTexture);
+        glBindTexture(GL_TEXTURE_2D, colorTexture);
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_SRGB8, textureWidth, textureHeight, 0, (channels == 3) ? GL_RGB : GL_RGBA, GL_UNSIGNED_BYTE, &data[0]);
+        glGenerateMipmap(GL_TEXTURE_2D);
+    }
 
-    //GLuint trilinearSampler = GL_NONE;
-    //{
-    //    glGenSamplers(1, &trilinearSampler);
-    //    glSamplerParameteri(trilinearSampler, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
-    //    glSamplerParameteri(trilinearSampler, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-    //    glSamplerParameteri(trilinearSampler, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-    //    glSamplerParameteri(trilinearSampler, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-    //}
+	// Create the main shader
+
+    GLuint trilinearSampler = GL_NONE;
+    {
+        glGenSamplers(1, &trilinearSampler);
+        glSamplerParameteri(trilinearSampler, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+        glSamplerParameteri(trilinearSampler, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+        glSamplerParameteri(trilinearSampler, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+        glSamplerParameteri(trilinearSampler, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+    }
 
 #   ifdef _VR
         vr::TrackedDevicePose_t trackedDevicePose[vr::k_unMaxTrackedDeviceCount];
@@ -232,6 +236,7 @@ void run() {
     // Main loop:
     int timer = 0;
     while (! glfwWindowShouldClose(window)) {
+		GLSL::check_gl_error("Loop");
         assert(glGetError() == GL_NONE);
 
         const float nearPlaneZ = -0.1f;
@@ -262,7 +267,7 @@ void run() {
             glClearColor(0.1f, 0.2f, 0.3f, 0.0f);
             glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-            const Matrix4x4& objectToWorldMatrix       = Matrix4x4::translate(0.0f, 0.5f, -5.0f) * Matrix4x4::yaw(PI / 3.0f);
+            const Matrix4x4& objectToWorldMatrix       = Matrix4x4::translate(0.0f, 2.5f, -5.0f) * Matrix4x4::yaw(PI / 3.0f);
             const Matrix3x3& objectToWorldNormalMatrix = Matrix3x3(objectToWorldMatrix).transpose().inverse();
             const Matrix4x4& cameraToWorldMatrix       = headToWorldMatrix * eyeToHead[eye];
 
@@ -277,6 +282,8 @@ void run() {
             //glDepthFunc(GL_LESS);
             //glEnable(GL_CULL_FACE);
             //glDepthMask(GL_TRUE);
+			//glLineWidth(2.0);
+			//glPointSize(2);
         
             glUseProgram(prog->prog);
 
@@ -313,7 +320,8 @@ void run() {
             glBindSampler(colorTextureUnit, trilinearSampler);
             glUniform1i(colorTextureUniform, colorTextureUnit);*/
 
-			glUniform3f(prog->getUniformHandle("uDiffuseColor"), .8, .8, .8);
+			
+			glUniform3f(prog->getUniformHandle("uDirLight"), -1, -1, -1);
 
             // Other uniforms in the interface block
             {
@@ -335,7 +343,7 @@ void run() {
                 //glUnmapBuffer(GL_UNIFORM_BUFFER);
             }
 			glm::mat4 model_transform;
-			glm::translate(model_transform, glm::vec3(0, 0, -10));
+			glm::translate(model_transform, glm::vec3(0, 5, -10));
 			const Matrix4x4& modelViewProjectionMatrix = projectionMatrix[eye] * cameraToWorldMatrix.inverse() * objectToWorldMatrix;
 			glUniformMatrix4fv(prog->getUniformHandle("uMVP"), 1, GL_TRUE, modelViewProjectionMatrix.data);
 			glUniformMatrix4fv(prog->getUniformHandle("uModelMatrix"), 1, GL_FALSE, objectToWorldMatrix.data);
@@ -343,8 +351,33 @@ void run() {
 
 			glBindVertexArray(box.vao());
 			//glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-            glDrawElements(GL_TRIANGLES, box.num_indices(), GL_UNSIGNED_INT, 0);
+			glUniform3f(prog->getUniformHandle("uDiffuseColor"), .8, .8, .8);
+			box.draw_tris();
+			glUniform3f(prog->getUniformHandle("uDiffuseColor"), .5, .5, .5);
+			//glLineWidth(1.1);
+			box.draw_edges();
+			glUniform3f(prog->getUniformHandle("uDiffuseColor"), .4, .4, .4);
+			glPointSize(5);
+			box.draw_verts();
 			glBindVertexArray(0);
+
+
+
+			glUseProgram(sphere.vao());
+			GLSL::check_gl_error("1");
+			const Matrix4x4& objectToWorldMatrixTemp = Matrix4x4::translate(0.0f, 2.f, -2.0f) * Matrix4x4::yaw(PI / 3.0f);
+			const Matrix4x4& modelViewProjectionMatrixTemp = projectionMatrix[eye] * cameraToWorldMatrix.inverse() * objectToWorldMatrixTemp;
+	
+			glUniformMatrix4fv(prog->getUniformHandle("uMVP"), 1, GL_TRUE, modelViewProjectionMatrixTemp.data);
+			GLSL::check_gl_error("2");
+			glUniformMatrix4fv(prog->getUniformHandle("uModelMatrix"), 1, GL_FALSE, objectToWorldMatrixTemp.data);
+			GLSL::check_gl_error("3");
+			glUniform3f(prog->getUniformHandle("uDiffuseColor"), 0, .3, .8);
+			GLSL::check_gl_error("4");
+			sphere.draw_tris();
+			GLSL::check_gl_error("5");
+
+
 			glUseProgram(0);
 #           ifdef _VR
             {

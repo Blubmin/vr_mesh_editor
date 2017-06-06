@@ -83,7 +83,7 @@ GLFWwindow* initOpenGL(int width, int height, const std::string& title) {
     glfwWindowHint(GLFW_RESIZABLE, GL_FALSE);
 
 #   ifdef _DEBUG
-       glfwWindowHint(GLFW_OPENGL_DEBUG_CONTEXT, GL_TRUE);
+       //glfwWindowHint(GLFW_OPENGL_DEBUG_CONTEXT, GL_TRUE);
 #   endif
 
     GLFWwindow* window = glfwCreateWindow(width, height, title.c_str(), nullptr, nullptr);
@@ -102,8 +102,8 @@ GLFWwindow* initOpenGL(int width, int height, const std::string& title) {
     while (glGetError() != GL_NONE) {}
 
 #   ifdef _DEBUG
-        glEnable(GL_DEBUG_OUTPUT_SYNCHRONOUS);
-        glEnable(GL_DEBUG_OUTPUT);
+        //glEnable(GL_DEBUG_OUTPUT_SYNCHRONOUS);
+        //glEnable(GL_DEBUG_OUTPUT);
 #       ifndef _OSX
             // Causes a segmentation fault on OS X
             glDebugMessageCallback(debugCallback, nullptr);
@@ -264,6 +264,9 @@ void drawSky(int windowWidth, int windowHeight, float nearPlaneZ, float farPlane
     glUniformMatrix4fv(cameraToWorldMatrixUniform, 1, GL_TRUE, cameraToWorldMatrix);
     glUniformMatrix4fv(invProjectionMatrixUniform, 1, GL_TRUE, projectionMatrixInverse);
     glDrawArrays(GL_TRIANGLES, 0, 3);
+
+	glUseProgram(0);
+	glBindVertexArray(0);
 
 #   undef PIXEL_SHADER
 #   undef VERTEX_SHADER

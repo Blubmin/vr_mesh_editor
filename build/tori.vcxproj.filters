@@ -11,6 +11,7 @@
     <ClCompile Include="GLSL.cpp" />
     <ClCompile Include="Program.cpp" />
     <ClCompile Include="ExceptionWrapper.cpp" />
+    <ClCompile Include="Quad.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="U:\VR\minimalOpenGL\matrix.h">
@@ -29,6 +30,7 @@
     <ClInclude Include="GLSL.h" />
     <ClInclude Include="Program.h" />
     <ClInclude Include="ExceptionWrapper.h" />
+    <ClInclude Include="Quad.h" />
   </ItemGroup>
   <ItemGroup>
     <CustomBuild Include="U:\VR\minimalOpenGL\CMakeLists.txt" />

@@ -39,6 +39,25 @@ void Edge::remove_triangle(Triangle * tri)
 	_tris.erase(remove(_tris.begin(), _tris.end(), tri));
 }
 
+void Edge::add_quad(Quad * quad)
+{
+	_quads.push_back(quad);
+}
+
+void Edge::remove_quad(Quad * quad)
+{
+	_quads.erase(remove(_quads.begin(), _quads.end(), quad));
+}
+
+
+vector<Triangle*> Edge::tris() {
+	return _tris;
+}
+
+vector<Quad*> Edge::quads() {
+	return _quads;
+}
+
 void Edge::select()
 {
 	_selected = true;

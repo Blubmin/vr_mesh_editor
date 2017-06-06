@@ -5,6 +5,7 @@
 #include <glm\glm.hpp>
 
 class Edge;
+class Quad;
 class Triangle;
 
 class Vertex
@@ -13,7 +14,8 @@ class Vertex
 	glm::vec3 _pos;
 	std::vector<Edge*> _edges;
 	std::vector<Triangle*> _tris;
-	
+	std::vector<Quad*> _quads;
+
 public:
 	Vertex();
 	Vertex(glm::vec3 pos);
@@ -23,6 +25,8 @@ public:
 	glm::vec3 get_pos();
 	void add_triangle(Triangle * tri);
 	void remove_triangle(Triangle * tri);
+	void add_quad(Quad * quad);
+	void remove_quad(Quad * quad);
 	void add_edge(Edge* edge);
 	void remove_edge(Edge* edge);
 	void select();

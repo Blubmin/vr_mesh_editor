@@ -329,12 +329,14 @@ if %errorlevel% neq 0 goto :VCEnd</Command>
     <ClCompile Include="ExceptionWrapper.cpp" />
     <ClCompile Include="GLSL.cpp" />
     <ClCompile Include="Program.cpp" />
+    <ClCompile Include="Quad.cpp" />
     <ClCompile Include="Vertex.cpp" />
     <ClInclude Include="Edge.h" />
     <ClInclude Include="ExceptionWrapper.h" />
     <ClInclude Include="GLSL.h" />
     <ClInclude Include="Mesh.h" />
     <ClInclude Include="Program.h" />
+    <ClInclude Include="Quad.h" />
     <ClInclude Include="Triangle.h" />
     <ClInclude Include="U:\VR\minimalOpenGL\matrix.h" />
     <ClInclude Include="U:\VR\minimalOpenGL\minimalOpenGL.h" />
@@ -360,6 +362,8 @@ if %errorlevel% neq 0 goto :VCEnd</Command>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
     <Import Project="packages\glfw.redist.3.2.1\build\native\glfw.redist.targets" Condition="Exists('packages\glfw.redist.3.2.1\build\native\glfw.redist.targets')" />
+    <Import Project="packages\Assimp.redist.3.0.0\build\native\Assimp.redist.targets" Condition="Exists('packages\Assimp.redist.3.0.0\build\native\Assimp.redist.targets')" />
+    <Import Project="packages\Assimp.3.0.0\build\native\Assimp.targets" Condition="Exists('packages\Assimp.3.0.0\build\native\Assimp.targets')" />
   </ImportGroup>
   <Target Name="EnsureNuGetPackageBuildImports" BeforeTargets="PrepareForBuild">
     <PropertyGroup>
@@ -367,5 +371,7 @@ if %errorlevel% neq 0 goto :VCEnd</Command>
     </PropertyGroup>
     <Error Condition="!Exists('packages\glfw.redist.3.2.1\build\native\glfw.redist.targets')" Text="$([System.String]::Format('$(ErrorText)', 'packages\glfw.redist.3.2.1\build\native\glfw.redist.targets'))" />
     <Error Condition="!Exists('packages\GLMathematics.0.9.5.4\build\native\GLMathematics.props')" Text="$([System.String]::Format('$(ErrorText)', 'packages\GLMathematics.0.9.5.4\build\native\GLMathematics.props'))" />
+    <Error Condition="!Exists('packages\Assimp.redist.3.0.0\build\native\Assimp.redist.targets')" Text="$([System.String]::Format('$(ErrorText)', 'packages\Assimp.redist.3.0.0\build\native\Assimp.redist.targets'))" />
+    <Error Condition="!Exists('packages\Assimp.3.0.0\build\native\Assimp.targets')" Text="$([System.String]::Format('$(ErrorText)', 'packages\Assimp.3.0.0\build\native\Assimp.targets'))" />
   </Target>
 </Project>

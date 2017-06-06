@@ -4,6 +4,7 @@
 
 #include <glm\glm.hpp>
 
+class Quad;
 class Triangle;
 class Vertex;
 
@@ -13,6 +14,7 @@ class Edge
 	Vertex* _start;
 	Vertex* _end;
 	std::vector<Triangle*> _tris;
+	std::vector<Quad*> _quads;
 
 public:
 	Edge();
@@ -23,6 +25,10 @@ public:
 	Vertex* get_end();
 	void add_triangle(Triangle* tri);
 	void remove_triangle(Triangle* tri);
+	void add_quad(Quad * quad);
+	void remove_quad(Quad * quad);
+	std::vector<Triangle*> tris();
+	std::vector<Quad*> quads();
 	void select();
 	void deselect();
 	bool selected();
