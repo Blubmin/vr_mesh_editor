@@ -1,6 +1,0 @@
-﻿  Mesh.cpp
-Mesh.cpp(53): warning C4018: '<': signed/unsigned mismatch
-Mesh.cpp(60): warning C4018: '<': signed/unsigned mismatch
-Mesh.cpp(63): warning C4018: '<': signed/unsigned mismatch
-Mesh.cpp(139): warning C4018: '<': signed/unsigned mismatch
-  tori.vcxproj -> U:\VR\minimalOpenGL\build\Debug\tori.exe
