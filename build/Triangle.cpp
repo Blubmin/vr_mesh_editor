@@ -17,6 +17,8 @@ Triangle::Triangle(Edge * e1, Edge * e2, Edge * e3)
 	_verts.push_back(e1->get_start());
 	_verts.push_back(e2->get_start());
 	_verts.push_back(e3->get_start());
+
+    _selected = false;
 }
 
 Triangle::~Triangle()
@@ -43,7 +45,19 @@ void Triangle::remove_edge(Edge * edge)
 	_edges.erase(remove(_edges.begin(), _edges.end(), edge));
 }
 
-std::vector<Edge*> Triangle::get_edges()
+void Triangle::replace(Edge * old_val, Edge * new_val) {
+    _edges.erase(remove(_edges.begin(), _edges.end(), old_val));
+    for (auto e : _edges) {
+        bool skip = true;
+        for (auto t : e->tris()) skip &= t->selected();
+        if (!skip) continue;
+        e->replace(old_val->get_start(), new_val->get_start());
+        e->replace(old_val->get_end(), new_val->get_end());
+    }
+    _edges.push_back(new_val);
+}
+
+std::vector<Edge*>& Triangle::get_edges()
 {
 	return _edges;
 }

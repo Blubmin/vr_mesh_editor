@@ -32,6 +32,7 @@ public:
 	void select();
 	void deselect();
 	bool selected();
+    void translate(glm::vec3 dist);
 
 	bool operator==(const Vertex& other);
 	bool operator==(const glm::vec3& v);

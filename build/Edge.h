@@ -27,8 +27,9 @@ public:
 	void remove_triangle(Triangle* tri);
 	void add_quad(Quad * quad);
 	void remove_quad(Quad * quad);
-	std::vector<Triangle*> tris();
-	std::vector<Quad*> quads();
+    void replace(Vertex* old_val, Vertex* new_val);
+	std::vector<Triangle*>& tris();
+	std::vector<Quad*>& quads();
 	void select();
 	void deselect();
 	bool selected();

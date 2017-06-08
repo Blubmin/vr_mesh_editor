@@ -1,4 +1,4 @@
-# Install script for directory: U:/VR/minimalOpenGL
+# Install script for directory: C:/Users/Ian/Documents/Classwork/CPE572/vr_mesh_editor
 
 # Set the install prefix
 if(NOT DEFINED CMAKE_INSTALL_PREFIX)
@@ -35,5 +35,5 @@ endif()
 
 string(REPLACE ";" "\n" CMAKE_INSTALL_MANIFEST_CONTENT
        "${CMAKE_INSTALL_MANIFEST_FILES}")
-file(WRITE "U:/VR/minimalOpenGL/build/${CMAKE_INSTALL_MANIFEST}"
+file(WRITE "C:/Users/Ian/Documents/Classwork/CPE572/vr_mesh_editor/build/${CMAKE_INSTALL_MANIFEST}"
      "${CMAKE_INSTALL_MANIFEST_CONTENT}")

@@ -11,6 +11,7 @@ Vertex::Vertex()
 
 Vertex::Vertex(glm::vec3 pos) {
 	_pos = pos;
+    _selected = false;
 }
 
 Vertex::~Vertex()
@@ -70,6 +71,10 @@ void Vertex::deselect()
 bool Vertex::selected()
 {
 	return _selected;
+}
+
+void Vertex::translate(glm::vec3 dist) {
+    _pos += dist;
 }
 
 bool Vertex::operator==(const Vertex& other) {

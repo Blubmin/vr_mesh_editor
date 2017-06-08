@@ -62,15 +62,18 @@
 #include <exception>
 #include <iostream>
 
+#include "minimalOpenGL.h"
+
 #include <engine_base\Program.h>
 #include <engine_base\GLSL.h>
+#include "Input.h"
 #include "Mesh.h"
 #include "matrix.h"
-#include "minimalOpenGL.h"
 
 #include <glm\gtc\matrix_transform.hpp>
 #include <glm\gtc\type_ptr.hpp>
 
+using namespace glm;
 using namespace std;
 
 #ifdef _VR
@@ -87,7 +90,17 @@ GLFWwindow* window = nullptr;
 #   define Shape Cube
 #endif
 
+
+    
 Program* prog;
+vec3 lft, rht;
+vec3 mesh_translate;
+vec3 translate_pos;
+float scale_dist;
+bool is_translating = false;
+bool is_extruding = false;
+bool is_scaling = false;
+
 
 void run() {
 	uint32_t framebufferWidth = 1280, framebufferHeight = 720;
@@ -142,13 +155,17 @@ void run() {
     /////////////////////////////////////////////////////////////////
     // Load vertex array buffers
 
-	prog = new Program("build/flat.vert", "build/flat.frag");
+    lft = vec3(0, 2, -2);
+    rht = vec3(0, 2, -1);
+    mesh_translate = vec3(0, 2.5f, -5.0f);
+
+	prog = new Program("flat.vert", "flat.frag");
 	Mesh box = Mesh();
-	Mesh sphere = Mesh("ball.obj");
+	Mesh sphere = Mesh("../assets/sphere.obj");
 
     /////////////////////////////////////////////////////////////////////
     // Create the main shader
-    const GLuint shader = createShaderProgram(loadTextFile("min.vrt"), loadTextFile("min.pix"));
+    const GLuint shader = createShaderProgram(loadTextFile("../min.vrt"), loadTextFile("../min.pix"));
 
     // Binding points for attributes and uniforms discovered from the shader
     const GLint positionAttribute   = glGetAttribLocation(shader,  "position");
@@ -210,7 +227,7 @@ void run() {
     {
         int textureWidth, textureHeight, channels;
         std::vector<std::uint8_t> data;
-        loadBMP("color.bmp", textureWidth, textureHeight, channels, data);
+        loadBMP("../color.bmp", textureWidth, textureHeight, channels, data);
 
         glGenTextures(1, &colorTexture);
         glBindTexture(GL_TEXTURE_2D, colorTexture);
@@ -235,8 +252,8 @@ void run() {
 
     // Main loop:
     int timer = 0;
-    while (! glfwWindowShouldClose(window)) {
-		GLSL::check_gl_error("Loop");
+    while (!glfwWindowShouldClose(window)) {
+        GLSL::check_gl_error("Loop");
         assert(glGetError() == GL_NONE);
 
         const float nearPlaneZ = -0.1f;
@@ -245,14 +262,14 @@ void run() {
 
         Matrix4x4 eyeToHead[numEyes], projectionMatrix[numEyes], headToBodyMatrix;
 #       ifdef _VR
-            getEyeTransformations(hmd, trackedDevicePose, nearPlaneZ, farPlaneZ, headToBodyMatrix.data, eyeToHead[0].data, eyeToHead[1].data, projectionMatrix[0].data, projectionMatrix[1].data);
+        getEyeTransformations(hmd, trackedDevicePose, nearPlaneZ, farPlaneZ, headToBodyMatrix.data, eyeToHead[0].data, eyeToHead[1].data, projectionMatrix[0].data, projectionMatrix[1].data);
 #       else
-            projectionMatrix[0] = Matrix4x4::perspective(float(framebufferWidth), float(framebufferHeight), nearPlaneZ, farPlaneZ, verticalFieldOfView);
+        projectionMatrix[0] = Matrix4x4::perspective(float(framebufferWidth), float(framebufferHeight), nearPlaneZ, farPlaneZ, verticalFieldOfView);
 #       endif
 
         // printf("float nearPlaneZ = %f, farPlaneZ = %f; int width = %d, height = %d;\n", nearPlaneZ, farPlaneZ, framebufferWidth, framebufferHeight);
 
-        const Matrix4x4& bodyToWorldMatrix = 
+        const Matrix4x4& bodyToWorldMatrix =
             Matrix4x4::translate(bodyTranslation) *
             Matrix4x4::roll(bodyRotation.z) *
             Matrix4x4::yaw(bodyRotation.y) *
@@ -267,9 +284,11 @@ void run() {
             glClearColor(0.1f, 0.2f, 0.3f, 0.0f);
             glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-            const Matrix4x4& objectToWorldMatrix       = Matrix4x4::translate(0.0f, 2.5f, -5.0f) * Matrix4x4::yaw(PI / 3.0f);
+            const Matrix4x4& objectToWorldMatrix = Matrix4x4::translate(mesh_translate.x,
+                mesh_translate.y,
+                mesh_translate.z);
             const Matrix3x3& objectToWorldNormalMatrix = Matrix3x3(objectToWorldMatrix).transpose().inverse();
-            const Matrix4x4& cameraToWorldMatrix       = headToWorldMatrix * eyeToHead[eye];
+            const Matrix4x4& cameraToWorldMatrix = headToWorldMatrix * eyeToHead[eye];
 
             const Vector3& light = Vector3(1.0f, 0.5f, 0.2f).normalize();
 
@@ -282,9 +301,9 @@ void run() {
             //glDepthFunc(GL_LESS);
             //glEnable(GL_CULL_FACE);
             //glDepthMask(GL_TRUE);
-			//glLineWidth(2.0);
-			//glPointSize(2);
-        
+            //glLineWidth(2.0);
+            //glPointSize(2);
+
             glUseProgram(prog->prog);
 
             //// in position
@@ -320,8 +339,10 @@ void run() {
             glBindSampler(colorTextureUnit, trilinearSampler);
             glUniform1i(colorTextureUniform, colorTextureUnit);*/
 
-			
-			glUniform3f(prog->getUniformHandle("uDirLight"), -1, -1, -1);
+
+            glUniform3f(prog->getUniformHandle("uDirLight"), mesh_translate.x - bodyTranslation.x, 
+                                                             mesh_translate.y - bodyTranslation.y, 
+                                                             mesh_translate.z - bodyTranslation.z);
 
             // Other uniforms in the interface block
             {
@@ -342,43 +363,46 @@ void run() {
                 //memcpy(ptr + uniformOffset[4], &cameraPosition.x, sizeof(Vector3));
                 //glUnmapBuffer(GL_UNIFORM_BUFFER);
             }
-			glm::mat4 model_transform;
-			glm::translate(model_transform, glm::vec3(0, 5, -10));
-			const Matrix4x4& modelViewProjectionMatrix = projectionMatrix[eye] * cameraToWorldMatrix.inverse() * objectToWorldMatrix;
-			glUniformMatrix4fv(prog->getUniformHandle("uMVP"), 1, GL_TRUE, modelViewProjectionMatrix.data);
-			glUniformMatrix4fv(prog->getUniformHandle("uModelMatrix"), 1, GL_FALSE, objectToWorldMatrix.data);
-			//glUniformMatrix4fv(prog->getUniformHandle("uViewMatrix"), 1, GL_FALSE, cameraToWorldMatrix.data);
+            glm::mat4 model_transform;
+            glm::translate(model_transform, glm::vec3(0, 5, -10));
+            const Matrix4x4& modelViewProjectionMatrix = projectionMatrix[eye] * cameraToWorldMatrix.inverse() * objectToWorldMatrix;
+            glUniformMatrix4fv(prog->getUniformHandle("uMVP"), 1, GL_TRUE, modelViewProjectionMatrix.data);
+            glUniformMatrix4fv(prog->getUniformHandle("uModelMatrix"), 1, GL_FALSE, objectToWorldMatrix.data);
+            //glUniformMatrix4fv(prog->getUniformHandle("uViewMatrix"), 1, GL_FALSE, cameraToWorldMatrix.data);
 
-			glBindVertexArray(box.vao());
-			//glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-			glUniform3f(prog->getUniformHandle("uDiffuseColor"), .8, .8, .8);
-			box.draw_tris();
-			glUniform3f(prog->getUniformHandle("uDiffuseColor"), .5, .5, .5);
-			//glLineWidth(1.1);
-			box.draw_edges();
-			glUniform3f(prog->getUniformHandle("uDiffuseColor"), .4, .4, .4);
-			glPointSize(5);
-			box.draw_verts();
-			glBindVertexArray(0);
-
-
-
-			glUseProgram(sphere.vao());
-			GLSL::check_gl_error("1");
-			const Matrix4x4& objectToWorldMatrixTemp = Matrix4x4::translate(0.0f, 2.f, -2.0f) * Matrix4x4::yaw(PI / 3.0f);
-			const Matrix4x4& modelViewProjectionMatrixTemp = projectionMatrix[eye] * cameraToWorldMatrix.inverse() * objectToWorldMatrixTemp;
-	
-			glUniformMatrix4fv(prog->getUniformHandle("uMVP"), 1, GL_TRUE, modelViewProjectionMatrixTemp.data);
-			GLSL::check_gl_error("2");
-			glUniformMatrix4fv(prog->getUniformHandle("uModelMatrix"), 1, GL_FALSE, objectToWorldMatrixTemp.data);
-			GLSL::check_gl_error("3");
-			glUniform3f(prog->getUniformHandle("uDiffuseColor"), 0, .3, .8);
-			GLSL::check_gl_error("4");
-			sphere.draw_tris();
-			GLSL::check_gl_error("5");
+            glBindVertexArray(box.vao());
+            //glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+            glUniform3f(prog->getUniformHandle("uDiffuseColor"), .8, .8, .8);
+            box.draw_tris();
+            glUniform3f(prog->getUniformHandle("uDiffuseColor"), .5, .5, .5);
+            //glLineWidth(1.1);
+            box.draw_edges();
+            glUniform3f(prog->getUniformHandle("uDiffuseColor"), .4, .4, .4);
+            glPointSize(5);
+            box.draw_verts();
+            glBindVertexArray(0);
 
 
-			glUseProgram(0);
+            const Matrix4x4& objectToWorldMatrixLft = Matrix4x4::translate(lft.x, lft.y, lft.z) * Matrix4x4::scale(.5, .5, .5);
+            const Matrix4x4& modelViewProjectionMatrixLft = projectionMatrix[eye] * cameraToWorldMatrix.inverse() * objectToWorldMatrixLft;
+
+            const Matrix4x4& objectToWorldMatrixRht = Matrix4x4::translate(rht.x, rht.y, rht.z) * Matrix4x4::scale(.5, .5, .5);
+            const Matrix4x4& modelViewProjectionMatrixRht = projectionMatrix[eye] * cameraToWorldMatrix.inverse() * objectToWorldMatrixRht;
+
+            glBindVertexArray(sphere.vao());
+            glUniform3f(prog->getUniformHandle("uDiffuseColor"), 0, .3, .8);
+
+            glUniformMatrix4fv(prog->getUniformHandle("uMVP"), 1, GL_TRUE, modelViewProjectionMatrixLft.data);
+            glUniformMatrix4fv(prog->getUniformHandle("uModelMatrix"), 1, GL_FALSE, objectToWorldMatrixLft.data);
+            sphere.draw_tris();
+
+            glUniformMatrix4fv(prog->getUniformHandle("uMVP"), 1, GL_TRUE, modelViewProjectionMatrixRht.data);
+            glUniformMatrix4fv(prog->getUniformHandle("uModelMatrix"), 1, GL_FALSE, objectToWorldMatrixRht.data);
+            sphere.draw_tris();
+
+            glBindVertexArray(0);
+
+            glUseProgram(0);
 #           ifdef _VR
             {
                 const vr::Texture_t tex = { reinterpret_cast<void*>(intptr_t(colorRenderTarget[eye])), vr::TextureType_OpenGL, vr::ColorSpace_Gamma };
@@ -390,7 +414,7 @@ void run() {
         ////////////////////////////////////////////////////////////////////////
 #       ifdef _VR
             // Tell the compositor to begin work immediately instead of waiting for the next WaitGetPoses() call
-            vr::VRCompositor()->PostPresentHandoff();
+        vr::VRCompositor()->PostPresentHandoff();
 #       endif
 
         // Mirror to the window
@@ -404,6 +428,7 @@ void run() {
         glfwSwapBuffers(window);
 
         // Check for events
+        Input::clear();
         glfwPollEvents();
 
         // Handle events
@@ -419,6 +444,60 @@ void run() {
         if (GLFW_PRESS == glfwGetKey(window, GLFW_KEY_D)) { bodyTranslation += Vector3(headToWorldMatrix * Vector4(+cameraMoveSpeed, 0, 0, 0)); }
         if (GLFW_PRESS == glfwGetKey(window, GLFW_KEY_C)) { bodyTranslation.y -= cameraMoveSpeed; }
         if ((GLFW_PRESS == glfwGetKey(window, GLFW_KEY_SPACE)) || (GLFW_PRESS == glfwGetKey(window, GLFW_KEY_Z))) { bodyTranslation.y += cameraMoveSpeed; }
+
+#ifndef _VR
+
+        if (Input::key_pressed_down(GLFW_KEY_UP)) { rht += vec3(1, 0, 0) * cameraMoveSpeed * 0.5f; }
+        if (Input::key_pressed_down(GLFW_KEY_DOWN)) { rht -= vec3(1, 0, 0) * cameraMoveSpeed * 0.5f; }
+        if (Input::key_pressed_down(GLFW_KEY_LEFT)) { rht += vec3(0, 0, 1) * cameraMoveSpeed * 0.5f; }
+        if (Input::key_pressed_down(GLFW_KEY_RIGHT)) { rht -= vec3(0, 0, 1) * cameraMoveSpeed * 0.5f; }
+        if (Input::key_pressed_down(GLFW_KEY_PAGE_UP)) { rht += vec3(0, 1, 0) * cameraMoveSpeed * 0.5f; }
+        if (Input::key_pressed_down(GLFW_KEY_PAGE_DOWN)) { rht -= vec3(0, 1, 0) * cameraMoveSpeed * 0.5f; }
+        if (Input::button_pressed_down(GLFW_MOUSE_BUTTON_RIGHT)) { box.select(rht - mesh_translate, .5); }
+        if (Input::key_pressed_down(GLFW_KEY_DELETE)) { box.deselect(); }
+
+        if (Input::key_pressed_down(GLFW_KEY_RIGHT_SHIFT)) { 
+            if (!is_translating) {
+                translate_pos = rht;
+                is_translating = true;
+            }
+            else {
+                box.translate_selected(rht - translate_pos);
+                translate_pos = rht;
+            }
+        }
+        if (Input::key_released(GLFW_KEY_RIGHT_SHIFT)) { is_translating = false; }
+
+        if (Input::key_pressed_down(GLFW_KEY_ENTER)) {
+            if (!is_extruding) {
+                box.extrude();
+                translate_pos = rht;
+                is_extruding = true;
+        }
+            else {
+                box.translate_selected(rht - translate_pos);
+                translate_pos = rht;
+            }
+        }
+        if (Input::key_released(GLFW_KEY_ENTER)) { is_extruding = false; }
+
+        if (Input::key_pressed_down(GLFW_KEY_RIGHT_CONTROL)) {
+            if (!is_scaling) {
+                scale_dist = glm::distance(lft, rht);
+                is_scaling = true;
+            }
+            else {
+                box.scale_selected((glm::distance(lft, rht) / scale_dist) - 1);
+                scale_dist = glm::distance(lft, rht);
+            }
+        }
+        if (Input::key_released(GLFW_KEY_RIGHT_CONTROL)) { is_scaling = false; }
+
+#else
+#endif // !_VR
+
+        box.bind_geom();
+        
 
         // Keep the camera above the ground
         if (bodyTranslation.y < 0.01f) { bodyTranslation.y = 0.01f; }

@@ -13,6 +13,7 @@ Edge::Edge(Vertex* start, Vertex* end)
 {
 	_start = start;
 	_end = end;
+    _selected = false;
 }
 
 Edge::~Edge()
@@ -49,12 +50,17 @@ void Edge::remove_quad(Quad * quad)
 	_quads.erase(remove(_quads.begin(), _quads.end(), quad));
 }
 
+void Edge::replace(Vertex * old_val, Vertex * new_val) {
+    if (_start == old_val) _start = new_val;
+    if (_end == old_val) _end = new_val;
+}
 
-vector<Triangle*> Edge::tris() {
+
+vector<Triangle*>& Edge::tris() {
 	return _tris;
 }
 
-vector<Quad*> Edge::quads() {
+vector<Quad*>& Edge::quads() {
 	return _quads;
 }
 

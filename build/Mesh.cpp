@@ -39,11 +39,12 @@ Mesh::Mesh(const string & filename)
 	glGenBuffers(1, &_VBO_vert_indices);
 
 	std::fstream hFile(filename.c_str(), std::ios::in | std::ios::binary);
-	if (!hFile.is_open()) { throw std::invalid_argument("Error: File Not Found."); }
+	if (!hFile.is_open()) { throw std::invalid_argument("Error: File " + filename + " Not Found."); }
 	
 	Assimp::Importer importer;
 
 	const aiScene* scene = importer.ReadFile(filename,
+        aiProcess_CalcTangentSpace |
 		aiProcess_Triangulate |
 		aiProcess_JoinIdenticalVertices
 	);
@@ -53,7 +54,7 @@ Mesh::Mesh(const string & filename)
 	for (int i = 0; i < mesh->mNumVertices; i++)
 	{
 		aiVector3D pos = mesh->mVertices[i];
-		_verts.push_back(create_vert(vec3(pos.x, pos.y, pos.z)));
+        _vert_pos.push_back(vec3(pos.x, pos.y, pos.z));
 		_vert_selected.push_back(0);
 	}
 
@@ -105,40 +106,11 @@ void Mesh::init_geom() {
 	create_quad(cube_verts[5], cube_verts[1], cube_verts[3], cube_verts[7]);
 	create_quad(cube_verts[6], cube_verts[7], cube_verts[3], cube_verts[2]);*/
 
-	_vert_pos.clear();
-	for (auto v : _verts) {
-		_vert_pos.push_back(v->get_pos());
-	}
+    update_positions();
 
-	_vert_selected.clear();
-	for (auto v : _verts) {
-		_vert_selected.push_back(v->selected());
-	}
+    update_selected();
 
-	_tri_indices.clear();
-	for (auto t : _tris) {
-		for (auto e : t->get_edges()) {
-			auto pos = find(_verts.begin(), _verts.end(), t == e->tris()[0] ? e->get_start() : e->get_end());
-			auto idx = std::distance(_verts.begin(), pos);
-			_tri_indices.push_back(idx);
-		}
-	}
-
-	_edge_indices.clear();
-	for (auto e : _edges) {
-		auto pos = find(_verts.begin(), _verts.end(), e->get_start());
-		auto idx = std::distance(_verts.begin(), pos);
-		_edge_indices.push_back(idx);
-
-		pos = find(_verts.begin(), _verts.end(), e->get_end());
-		idx = std::distance(_verts.begin(), pos);
-		_edge_indices.push_back(idx);
-	}
-
-	_vert_indices.clear();
-	for (int i = 0; i < _verts.size(); i++) {
-		_vert_indices.push_back(i);
-	}
+    update_indices();
 }
 
 void Mesh::bind_geom() {
@@ -156,17 +128,23 @@ void Mesh::bind_geom() {
 	glEnableVertexAttribArray(1);
 	glVertexAttribPointer(1, 1, GL_FLOAT, GL_FALSE, 0, 0);
 
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, _VBO_tri_indices);
-	glBufferData(GL_ELEMENT_ARRAY_BUFFER,
-		_tri_indices.size() * sizeof(GLuint), _tri_indices.data(), GL_DYNAMIC_DRAW);
+    if (!_tri_indices.empty()) {
+        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, _VBO_tri_indices);
+        glBufferData(GL_ELEMENT_ARRAY_BUFFER,
+            _tri_indices.size() * sizeof(GLuint), _tri_indices.data(), GL_DYNAMIC_DRAW);
+    }
 
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, _VBO_edge_indices);
-	glBufferData(GL_ELEMENT_ARRAY_BUFFER,
-		_edge_indices.size() * sizeof(GLuint), _edge_indices.data(), GL_DYNAMIC_DRAW);
+    if (!_edge_indices.empty()) {
+        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, _VBO_edge_indices);
+        glBufferData(GL_ELEMENT_ARRAY_BUFFER,
+            _edge_indices.size() * sizeof(GLuint), _edge_indices.data(), GL_DYNAMIC_DRAW);
+    }
 
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, _VBO_vert_indices);
-	glBufferData(GL_ELEMENT_ARRAY_BUFFER,
-		_vert_indices.size() * sizeof(GLuint), _vert_indices.data(), GL_DYNAMIC_DRAW);
+    if (!_vert_indices.empty()) {
+        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, _VBO_vert_indices);
+        glBufferData(GL_ELEMENT_ARRAY_BUFFER,
+            _vert_indices.size() * sizeof(GLuint), _vert_indices.data(), GL_DYNAMIC_DRAW);
+    }
 
 	glBindVertexArray(0);
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
@@ -194,6 +172,201 @@ void Mesh::draw_verts()
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 }
 
+void Mesh::select(glm::vec3 pos, float rad) {
+    for (auto v : _verts) {
+        if (glm::distance(pos, v->get_pos()) >= rad) continue;
+        v->select();
+    }
+
+    for (auto e : _edges) {
+        if (!(e->get_start()->selected() && e->get_end()->selected())) continue;
+        e->select();
+    }
+
+    for (auto t : _tris) {
+        bool selected = true;
+        for (auto e : t->get_edges()) {
+            selected &= e->selected();
+        }
+        if (!selected) continue;
+        t->select();
+    }
+
+    update_selected();
+}
+
+void Mesh::update_selected() {
+    _vert_selected.clear();
+    for (auto v : _verts) {
+        _vert_selected.push_back(v->selected());
+    }
+}
+
+void Mesh::update_positions() {
+    _vert_pos.clear();
+    for (auto v : _verts) {
+        _vert_pos.push_back(v->get_pos());
+    }
+}
+
+void Mesh::update_indices() {
+    _tri_indices.clear();
+    for (auto t : _tris) {
+        for (auto e : t->get_edges()) {
+            auto pos = find(_verts.begin(), _verts.end(), t == e->tris()[0] ? e->get_start() : e->get_end());
+            auto idx = std::distance(_verts.begin(), pos);
+            _tri_indices.push_back(idx);
+        }
+    }
+
+    _edge_indices.clear();
+    for (auto e : _edges) {
+        auto pos = find(_verts.begin(), _verts.end(), e->get_start());
+        auto idx = std::distance(_verts.begin(), pos);
+        _edge_indices.push_back(idx);
+
+        pos = find(_verts.begin(), _verts.end(), e->get_end());
+        idx = std::distance(_verts.begin(), pos);
+        _edge_indices.push_back(idx);
+    }
+
+    _vert_indices.clear();
+    for (int i = 0; i < _verts.size(); i++) {
+        _vert_indices.push_back(i);
+    }
+}
+
+void Mesh::translate_selected(glm::vec3 dist) {
+    for (auto v : _verts) {
+        if (!v->selected()) continue;
+        v->translate(dist);
+    }
+    update_positions();
+}
+
+void Mesh::scale_selected(float percent) {
+    vec3 center;
+    int num = 0;
+
+    for (auto v : _verts) {
+        if (!v->selected()) continue;
+        center += v->get_pos();
+        num++;
+    }
+
+    center /= (float) num;
+
+    for (auto v : _verts) {
+        if (!v->selected()) continue;
+        v->translate((v->get_pos() - center) * percent);
+    }
+
+    update_positions();
+}
+
+void Mesh::extrude() {
+    Mesh temp;
+    vector<Edge*> horizon_e;
+    vector<Triangle*> selected;
+
+    for (auto e : _edges) {
+        int selected = 0;
+        for (auto t : e->tris()) {
+            if (t->selected()) selected++;
+        }
+        if (selected == 1) horizon_e.push_back(e);
+    }
+
+    for (auto t : _tris) {
+        if (t->selected()) selected.push_back(t);
+    }
+
+    for (auto e : horizon_e) {
+        e->get_start()->deselect();
+        e->get_end()->deselect();
+        e->deselect();
+
+        Vertex* start = temp.create_vert(e->get_start()->get_pos());
+        start->select();
+        Vertex* end = temp.create_vert(e->get_end()->get_pos());
+        end->select();
+        Edge* edge = temp.create_edge(start, end);
+        edge->tris() = vector<Triangle*>(2);
+
+        Triangle* t;
+        Triangle* t1;
+        Triangle* t2;
+        Edge* left;
+        Edge* diag;
+        Edge* right;
+
+        if (e->tris()[0]->selected()) {
+            t = e->tris()[0];
+            left = create_edge(start, e->get_start());
+            diag = create_edge(e->get_start(), end);
+            right = create_edge(e->get_end(), end);
+
+            t1 = new Triangle(edge, left, diag);
+            t2 = new Triangle(e, right, diag);
+            
+            edge->tris()[0] = t;
+            edge->tris()[1] = t1;
+
+            e->tris()[0] = t2;
+        }
+        else {
+            t = e->tris()[1];
+            left = create_edge(end, e->get_end());
+            diag = create_edge(e->get_end(), start);
+            right = create_edge(e->get_start(), start); 
+
+            t1 = new Triangle(edge, left, diag);
+            t2 = new Triangle(e, right, diag);
+
+            edge->tris()[0] = t1;
+            edge->tris()[1] = t;
+            
+            e->tris()[1] = t2;
+        }
+
+        t->replace(e, edge);
+
+        left->tris().push_back(t1);
+
+        diag->tris().push_back(t1);
+        diag->tris().push_back(t2);
+
+        right->tris().push_back(t2);
+
+        
+        auto pos = find(_verts.begin(), _verts.end(), start);
+        if (pos == _verts.end()) _verts.push_back(start);
+        pos = find(_verts.begin(), _verts.end(), end);
+        if (pos == _verts.end()) _verts.push_back(end);
+
+        _edges.push_back(edge);
+        _tris.push_back(t1);
+        _tris.push_back(t2);
+    }
+
+    update_positions();
+    update_selected();
+    update_indices();
+}
+
+void Mesh::deselect() {
+    for (auto v : _verts) {
+        v->deselect();
+    }
+    for (auto e : _edges) {
+        e->deselect();
+    }
+    for (auto t : _tris) {
+        t->deselect();
+    }
+    update_selected();
+}
+
 GLuint Mesh::vao()
 {
 	return _VAO;
@@ -205,10 +378,10 @@ Quad* Mesh::create_quad(vec3 v1, vec3 v2, vec3 v3, vec3 v4) {
 	Vertex* vert3 = create_vert(v3);
 	Vertex* vert4 = create_vert(v4);
 
-	Edge* e1 = create_edge(v1, v2);
-	Edge* e2 = create_edge(v2, v3);
-	Edge* e3 = create_edge(v3, v4);
-	Edge* e4 = create_edge(v4, v1);
+	Edge* e1 = create_edge(vert1, vert2);
+	Edge* e2 = create_edge(vert2, vert3);
+	Edge* e3 = create_edge(vert3, vert4);
+	Edge* e4 = create_edge(vert4, vert1);
 
 	Quad* q = new Quad();
 	q->add_edge(e1);
@@ -250,9 +423,9 @@ Triangle* Mesh::create_tri(vec3 v1, vec3 v2, vec3 v3) {
 	Vertex* vert2 = create_vert(v2);
 	Vertex* vert3 = create_vert(v3);
 
-	Edge* e1 = create_edge(v1, v2);
-	Edge* e2 = create_edge(v2, v3);
-	Edge* e3 = create_edge(v3, v1);
+	Edge* e1 = create_edge(vert1, vert2);
+	Edge* e2 = create_edge(vert2, vert3);
+	Edge* e3 = create_edge(vert3, vert1);
 
 	Triangle* t = new Triangle(e1, e2, e3);
 
@@ -279,18 +452,18 @@ Triangle* Mesh::create_tri(vec3 v1, vec3 v2, vec3 v3) {
 	return t;
 }
 
-Edge * Mesh::create_edge(vec3 v1, vec3 v2)
+Edge * Mesh::create_edge(Vertex* v1, Vertex* v2)
 {
 	Edge* edge = nullptr;
 	for (auto temp : _edges) {
-		if (*temp->get_start() == v1 && *temp->get_end() == v2 ||
-			*temp->get_start() == v2 && *temp->get_end() == v1) {
+		if (temp->get_start() == v1 && temp->get_end() == v2 ||
+			temp->get_start() == v2 && temp->get_end() == v1) {
 			edge = temp;
 			break;
 		}
 	}
 	if (edge == nullptr) {
-		edge = new Edge(create_vert(v1), create_vert(v2));
+		edge = new Edge(v1, v2);
 		_edges.push_back(edge);
 	}
 	return edge;

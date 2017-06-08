@@ -19,7 +19,8 @@ public:
 	void remove_vertex(Vertex * vert);
 	void add_edge(Edge * edge);
 	void remove_edge(Edge * edge);
-	std::vector<Edge*> get_edges();
+    void replace(Edge* old_val, Edge* new_val);
+	std::vector<Edge*>& get_edges();
 	void select();
 	void deselect();
 	bool selected();

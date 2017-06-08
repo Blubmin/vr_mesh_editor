@@ -38,10 +38,18 @@ public:
 	void draw_tris();
 	void draw_edges();
 	void draw_verts();
+    void select(glm::vec3 pos, float rad);
+    void update_selected();
+    void update_positions();
+    void update_indices();
+    void translate_selected(glm::vec3 dist);
+    void scale_selected(float percent);
+    void extrude();
+    void deselect();
 	GLuint vao();
 	Quad * create_quad(glm::vec3 v1, glm::vec3 v2, glm::vec3 v3, glm::vec3 v4);
 	Triangle* create_tri(glm::vec3 v1, glm::vec3 v2, glm::vec3 v3);
-	Edge* create_edge(glm::vec3 v1, glm::vec3 v2);
+	Edge* create_edge(Vertex* v1, Vertex* v2);
 	Vertex* create_vert(glm::vec3 v);
 };
 
