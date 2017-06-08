@@ -1,89 +1,52 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<Project ToolsVersion="14.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+<Project ToolsVersion="15.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
-    <ClCompile Include="C:\Users\Ian\Documents\Classwork\CPE572\vr_mesh_editor\main.cpp">
+    <ClCompile Include="U:\VR\minimalOpenGL\main.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Edge.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="ExceptionWrapper.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="GLSL.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="Mesh.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="Program.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="Quad.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="Triangle.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="Vertex.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="Input.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
+    <ClCompile Include="Edge.cpp" />
+    <ClCompile Include="ExceptionWrapper.cpp" />
+    <ClCompile Include="GLSL.cpp" />
+    <ClCompile Include="Input.cpp" />
+    <ClCompile Include="Mesh.cpp" />
+    <ClCompile Include="Program.cpp" />
+    <ClCompile Include="Quad.cpp" />
+    <ClCompile Include="Triangle.cpp" />
+    <ClCompile Include="Vertex.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="C:\Users\Ian\Documents\Classwork\CPE572\vr_mesh_editor\matrix.h">
+    <ClInclude Include="U:\VR\minimalOpenGL\matrix.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="C:\Users\Ian\Documents\Classwork\CPE572\vr_mesh_editor\minimalOpenGL.h">
+    <ClInclude Include="U:\VR\minimalOpenGL\minimalOpenGL.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="C:\Users\Ian\Documents\Classwork\CPE572\vr_mesh_editor\minimalOpenVR.h">
+    <ClInclude Include="U:\VR\minimalOpenGL\minimalOpenVR.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Edge.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="ExceptionWrapper.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="GLSL.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="Mesh.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="Program.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="Quad.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="Triangle.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="Vertex.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="Input.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
+    <ClInclude Include="Edge.h" />
+    <ClInclude Include="ExceptionWrapper.h" />
+    <ClInclude Include="GLSL.h" />
+    <ClInclude Include="Input.h" />
+    <ClInclude Include="Mesh.h" />
+    <ClInclude Include="Program.h" />
+    <ClInclude Include="Quad.h" />
+    <ClInclude Include="Triangle.h" />
+    <ClInclude Include="Vertex.h" />
   </ItemGroup>
   <ItemGroup>
-    <CustomBuild Include="C:\Users\Ian\Documents\Classwork\CPE572\vr_mesh_editor\CMakeLists.txt" />
+    <CustomBuild Include="U:\VR\minimalOpenGL\CMakeLists.txt" />
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Source Files">
-      <UniqueIdentifier>{8564D2FE-453D-4145-B186-6D1C3DEB7DEC}</UniqueIdentifier>
+      <UniqueIdentifier>{6D6FCE0D-D537-369D-B8C9-271FA2A744B5}</UniqueIdentifier>
     </Filter>
     <Filter Include="Header Files">
-      <UniqueIdentifier>{852C386A-6D96-46E8-A06A-F6DE01E2DC2E}</UniqueIdentifier>
+      <UniqueIdentifier>{2A9244E6-8EDB-3433-ADF0-DAB6B8D318EC}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
     <None Include="flat.frag" />
     <None Include="flat.vert" />
-    <None Include="packages.config" />
   </ItemGroup>
 </Project>

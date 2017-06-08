@@ -100,6 +100,28 @@ float scale_dist;
 bool is_translating = false;
 bool is_extruding = false;
 bool is_scaling = false;
+float world_scale = .1f;
+float height_offset = .5f;
+
+Vector4 ConvertSteamToPosition(const vr::HmdMatrix34_t &matPose) {
+	Matrix4x4 matrixObj(
+		matPose.m[0][0], matPose.m[1][0], matPose.m[2][0], 0.0,
+		matPose.m[0][1], matPose.m[1][1], matPose.m[2][1], 0.0,
+		matPose.m[0][2], matPose.m[1][2], matPose.m[2][2], 0.0,
+		matPose.m[0][3], matPose.m[1][3], matPose.m[2][3], 1.0f
+	);
+	return Vector4(matPose.m[0][3], matPose.m[1][3], matPose.m[2][3], 1);
+}
+
+Matrix4x4 ConvertSteamVRMatrixToMatrix4(const vr::HmdMatrix34_t &matPose) {
+	Matrix4x4 matrixObj(
+		matPose.m[0][0], matPose.m[1][0], matPose.m[2][0], 0.0,
+		matPose.m[0][1], matPose.m[1][1], matPose.m[2][1], 0.0,
+		matPose.m[0][2], matPose.m[1][2], matPose.m[2][2], 0.0,
+		matPose.m[0][3], matPose.m[1][3], matPose.m[2][3], 1.0f
+	);
+	return matrixObj;
+}
 
 
 void run() {
@@ -157,7 +179,7 @@ void run() {
 
     lft = vec3(0, 2, -2);
     rht = vec3(0, 2, -1);
-    mesh_translate = vec3(0, 2.5f, -5.0f);
+    mesh_translate = vec3(0, 1.0f, 5.0f);
 
 	prog = new Program("flat.vert", "flat.frag");
 	Mesh box = Mesh();
@@ -383,10 +405,10 @@ void run() {
             glBindVertexArray(0);
 
 
-            const Matrix4x4& objectToWorldMatrixLft = Matrix4x4::translate(lft.x, lft.y, lft.z) * Matrix4x4::scale(.5, .5, .5);
+            const Matrix4x4& objectToWorldMatrixLft = Matrix4x4::translate(lft.x, lft.y, lft.z) * Matrix4x4::scale(world_scale * .5, world_scale * .5, world_scale * .5);
             const Matrix4x4& modelViewProjectionMatrixLft = projectionMatrix[eye] * cameraToWorldMatrix.inverse() * objectToWorldMatrixLft;
 
-            const Matrix4x4& objectToWorldMatrixRht = Matrix4x4::translate(rht.x, rht.y, rht.z) * Matrix4x4::scale(.5, .5, .5);
+            const Matrix4x4& objectToWorldMatrixRht = Matrix4x4::translate(rht.x, rht.y, rht.z) * Matrix4x4::scale(world_scale * .5, world_scale * .5, world_scale * .5);
             const Matrix4x4& modelViewProjectionMatrixRht = projectionMatrix[eye] * cameraToWorldMatrix.inverse() * objectToWorldMatrixRht;
 
             glBindVertexArray(sphere.vao());
@@ -453,7 +475,7 @@ void run() {
         if (Input::key_pressed_down(GLFW_KEY_RIGHT)) { rht -= vec3(0, 0, 1) * cameraMoveSpeed * 0.5f; }
         if (Input::key_pressed_down(GLFW_KEY_PAGE_UP)) { rht += vec3(0, 1, 0) * cameraMoveSpeed * 0.5f; }
         if (Input::key_pressed_down(GLFW_KEY_PAGE_DOWN)) { rht -= vec3(0, 1, 0) * cameraMoveSpeed * 0.5f; }
-        if (Input::button_pressed_down(GLFW_MOUSE_BUTTON_RIGHT)) { box.select(rht - mesh_translate, .5); }
+        if (Input::button_pressed_down(GLFW_MOUSE_BUTTON_RIGHT)) { box.select(rht - mesh_translate, world_scale); }
         if (Input::key_pressed_down(GLFW_KEY_DELETE)) { box.deselect(); }
 
         if (Input::key_pressed_down(GLFW_KEY_RIGHT_SHIFT)) { 
@@ -501,7 +523,7 @@ void run() {
         for (int d = 0; d < vr::k_unMaxTrackedDeviceCount; ++d) {
             if (!trackedDevicePose[d].bPoseIsValid) continue;
             if (hmd->GetTrackedDeviceClass(d) != vr::TrackedDeviceClass_Controller) continue;
-            Vector4 pos = ConvertSteamVRMatrixToMatrix4(trackedDevicePose[d].mDeviceToAbsoluteTracking) * Vector4(0, 0, 0, 1);
+			Vector4 pos = ConvertSteamToPosition(trackedDevicePose[d].mDeviceToAbsoluteTracking);
 
             vr::VRControllerState_t state;
             hmd->GetControllerState(d, &state, sizeof(vr::VRControllerState_t));
@@ -511,28 +533,30 @@ void run() {
             uint64 touch = vr::ButtonMaskFromId(vr::k_EButton_SteamVR_Touchpad);
 
             if (!count++) {
-                lft = vec3(pos.x, pos.y, pos.z);
+                lft = vec3(pos.x, pos.y + height_offset, pos.z) + mesh_translate;
                 lft_a = (state.ulButtonPressed & a);
                 lft_grip = (state.ulButtonPressed & grip);
                 lft_trigger = (state.ulButtonPressed & trigger);
                 lft_touch = (state.ulButtonTouched & touch);
             }
             else {
-                rht = vec3(pos.x, pos.y, pos.z);
+                rht = vec3(pos.x, pos.y + height_offset, pos.z) + mesh_translate;
                 rht_a = (state.ulButtonPressed & a);
                 rht_grip = (state.ulButtonPressed & grip);
                 rht_trigger = (state.ulButtonPressed & trigger);
                 rht_touch = (state.ulButtonTouched & touch);
             }
         }
-        assert(count == 2);
 
         bool a = lft_a || rht_a;
         bool grip = lft_grip || rht_grip;
-        bool touch = lft_touch || rht_touch;
+		bool touch = true;
         bool trigger = lft_trigger || rht_trigger;
 
-        if (touch && grip) { box.select(rht - mesh_translate, .5); }
+        if (touch && grip) { 
+			box.select(rht - mesh_translate, world_scale * .5);
+			box.select(lft - mesh_translate, world_scale * .5);
+		}
         if (a) { box.deselect(); }
 
         if (touch && trigger) {
@@ -564,7 +588,7 @@ void run() {
             is_extruding = false;
         }
 
-        if (lft_touch && lft_trigger && rht_touch && rht_trigger) {
+        if (lft_trigger && rht_trigger) {
             if (!is_scaling) {
                 scale_dist = glm::distance(lft, rht);
                 is_scaling = true;
@@ -574,7 +598,7 @@ void run() {
                 scale_dist = glm::distance(lft, rht);
             }
         }
-        if (is_scaling && !(lft_touch && lft_trigger && rht_touch && rht_trigger)) { 
+        if (is_scaling && !(lft_trigger && rht_trigger)) { 
             is_scaling = false; 
         }
 #endif // !_VR
@@ -613,16 +637,6 @@ void run() {
     glfwTerminate();
 
     return;
-}
-
-Matrix4x4 ConvertSteamVRMatrixToMatrix4(const vr::HmdMatrix34_t &matPose) {
-    Matrix4x4 matrixObj(
-        matPose.m[0][0], matPose.m[1][0], matPose.m[2][0], 0.0,
-        matPose.m[0][1], matPose.m[1][1], matPose.m[2][1], 0.0,
-        matPose.m[0][2], matPose.m[1][2], matPose.m[2][2], 0.0,
-        matPose.m[0][3], matPose.m[1][3], matPose.m[2][3], 1.0f
-        );
-    return matrixObj;
 }
 
 int main(int argc, char** argv)

@@ -72,14 +72,14 @@ Mesh::Mesh(const string & filename)
 void Mesh::init_geom() {
 	vector<vec3> cube_verts;
 
-	cube_verts.emplace_back(1, 1, 1); // 0
-	cube_verts.emplace_back(1, 1, -1); // 1
-	cube_verts.emplace_back(1, -1, 1); // 2
-	cube_verts.emplace_back(1, -1, -1); // 3
-	cube_verts.emplace_back(-1, 1, 1); // 4
-	cube_verts.emplace_back(-1, 1, -1); // 5
-	cube_verts.emplace_back(-1, -1, 1); // 6
-	cube_verts.emplace_back(-1, -1, -1); // 7
+	cube_verts.emplace_back(.1, .1, .1); // 0
+	cube_verts.emplace_back(.1, .1, -.1); // 1
+	cube_verts.emplace_back(.1, -.1, .1); // 2
+	cube_verts.emplace_back(.1, -.1, -.1); // 3
+	cube_verts.emplace_back(-.1, .1, .1); // 4
+	cube_verts.emplace_back(-.1, .1, -.1); // 5
+	cube_verts.emplace_back(-.1, -.1, .1); // 6
+	cube_verts.emplace_back(-.1, -.1, -.1); // 7
 
 	create_tri(cube_verts[0], cube_verts[3], cube_verts[1]);
 	create_tri(cube_verts[2], cube_verts[3], cube_verts[0]);

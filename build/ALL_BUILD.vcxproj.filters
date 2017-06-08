@@ -1,7 +1,7 @@
 ﻿<?xml version="1.0" encoding="UTF-8"?>
-<Project ToolsVersion="14.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+<Project ToolsVersion="15.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
-    <CustomBuild Include="C:\Users\Ian\Documents\Classwork\CPE572\vr_mesh_editor\CMakeLists.txt" />
+    <CustomBuild Include="U:\VR\minimalOpenGL\CMakeLists.txt" />
   </ItemGroup>
   <ItemGroup>
   </ItemGroup>
