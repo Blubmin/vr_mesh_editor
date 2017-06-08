@@ -50,7 +50,7 @@
  */
 
 // Uncomment to add VR support
-// #define _VR
+#define _VR
 
 // To switch the box to a teapot, uncomment the following two lines
 //#include "teapot.h"
@@ -494,10 +494,92 @@ void run() {
         if (Input::key_released(GLFW_KEY_RIGHT_CONTROL)) { is_scaling = false; }
 
 #else
+        int count = 0;
+        bool lft_a, lft_grip, lft_trigger, lft_touch;
+        bool rht_a, rht_grip, rht_trigger, rht_touch;
+
+        for (int d = 0; d < vr::k_unMaxTrackedDeviceCount; ++d) {
+            if (!trackedDevicePose[d].bPoseIsValid) continue;
+            if (hmd->GetTrackedDeviceClass(d) != vr::TrackedDeviceClass_Controller) continue;
+            Vector4 pos = ConvertSteamVRMatrixToMatrix4(trackedDevicePose[d].mDeviceToAbsoluteTracking) * Vector4(0, 0, 0, 1);
+
+            vr::VRControllerState_t state;
+            hmd->GetControllerState(d, &state, sizeof(vr::VRControllerState_t));
+            uint64 a = vr::ButtonMaskFromId(vr::k_EButton_A);
+            uint64 grip = vr::ButtonMaskFromId(vr::k_EButton_Grip);
+            uint64 trigger = vr::ButtonMaskFromId(vr::k_EButton_SteamVR_Trigger);
+            uint64 touch = vr::ButtonMaskFromId(vr::k_EButton_SteamVR_Touchpad);
+
+            if (!count++) {
+                lft = vec3(pos.x, pos.y, pos.z);
+                lft_a = (state.ulButtonPressed & a);
+                lft_grip = (state.ulButtonPressed & grip);
+                lft_trigger = (state.ulButtonPressed & trigger);
+                lft_touch = (state.ulButtonTouched & touch);
+            }
+            else {
+                rht = vec3(pos.x, pos.y, pos.z);
+                rht_a = (state.ulButtonPressed & a);
+                rht_grip = (state.ulButtonPressed & grip);
+                rht_trigger = (state.ulButtonPressed & trigger);
+                rht_touch = (state.ulButtonTouched & touch);
+            }
+        }
+        assert(count == 2);
+
+        bool a = lft_a || rht_a;
+        bool grip = lft_grip || rht_grip;
+        bool touch = lft_touch || rht_touch;
+        bool trigger = lft_trigger || rht_trigger;
+
+        if (touch && grip) { box.select(rht - mesh_translate, .5); }
+        if (a) { box.deselect(); }
+
+        if (touch && trigger) {
+            if (!is_translating) {
+                translate_pos = rht;
+                is_translating = true;
+            }
+            else {
+                box.translate_selected(rht - translate_pos);
+                translate_pos = rht;
+            }
+        }
+        if (is_translating && !(touch && trigger)) {
+            is_translating = false;
+        }
+
+        if (touch && trigger && grip) {
+            if (!is_extruding) {
+                box.extrude();
+                translate_pos = rht;
+                is_extruding = true;
+            }
+            else {
+                box.translate_selected(rht - translate_pos);
+                translate_pos = rht;
+            }
+        }
+        if (is_extruding && !(touch && trigger && grip)) {
+            is_extruding = false;
+        }
+
+        if (lft_touch && lft_trigger && rht_touch && rht_trigger) {
+            if (!is_scaling) {
+                scale_dist = glm::distance(lft, rht);
+                is_scaling = true;
+            }
+            else {
+                box.scale_selected((glm::distance(lft, rht) / scale_dist) - 1);
+                scale_dist = glm::distance(lft, rht);
+            }
+        }
+        if (is_scaling && !(lft_touch && lft_trigger && rht_touch && rht_trigger)) { 
+            is_scaling = false; 
+        }
 #endif // !_VR
 
         box.bind_geom();
-        
 
         // Keep the camera above the ground
         if (bodyTranslation.y < 0.01f) { bodyTranslation.y = 0.01f; }
@@ -531,6 +613,16 @@ void run() {
     glfwTerminate();
 
     return;
+}
+
+Matrix4x4 ConvertSteamVRMatrixToMatrix4(const vr::HmdMatrix34_t &matPose) {
+    Matrix4x4 matrixObj(
+        matPose.m[0][0], matPose.m[1][0], matPose.m[2][0], 0.0,
+        matPose.m[0][1], matPose.m[1][1], matPose.m[2][1], 0.0,
+        matPose.m[0][2], matPose.m[1][2], matPose.m[2][2], 0.0,
+        matPose.m[0][3], matPose.m[1][3], matPose.m[2][3], 1.0f
+        );
+    return matrixObj;
 }
 
 int main(int argc, char** argv)
